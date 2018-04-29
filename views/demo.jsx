@@ -15,8 +15,6 @@ import samples from '../src/data/samples.json';
 import cachedModels from '../src/data/models.json';
 const ERR_MIC_NARROWBAND = 'Microphone transcription cannot accommodate narrowband voice models, please select a broadband one.';
 
-let SummaryTool = require('node-summary');
-
 export default React.createClass({
   displayName: 'Demo',
 
@@ -394,34 +392,60 @@ export default React.createClass({
       allMessages[i] = allMessages[i].split(" ");
     }
 
+
     for(let i = 0; i < allMessages.length; i++){
-      for(let j = i + 1; j < allMessages.length; j++){
-        let node = this.intersect(allMessages[i], allMessages[j]);
-        console.log(node);
-        allScores[i] += node[0];
-        allScores[j] += node[1];
+      let sentenceScore = 0;
+      for(let j = 0; j < allMessages[i].length; j++){
+          for(let c = 0; c < wordsToGtho.length; c++){
+            if(allMessages[i][j].toLowerCase() == wordsToGtho[c]){
+              sentenceScore--;
+            }
+          }
+        }
+        // let node = this.intersect(allMessages[i], allMessages[j]);
+        // console.log(node);
+        allScores[i] += sentenceScore;
       }
-    }
 
-    // let swaps = false;
-    //   do {
-    //     swaps = false;
-    //     for (let i = 0; i < allMessages.length - 1; i++) {
-    //       if (allScores[i] > allScores[i + 1]) {
-    //         let temp = allScores[i + 1];
-    //         let gay = allMessages[i + 1];
-    //         allScores[i + 1] = allScores[i];
-    //         allMessages[i + 1] = allMessages[i];
-    //         allScores[i] = temp;
-    //         allMessages[i] = gay;
-    //         swaps = true;
-    //       }
-    //     }
-    //   } while (swaps);
-    //
-    //   console.log(allMessages);
-    //   console.log('all the scores are ', allScores);
+    console.log(allMessages);
+    console.log(allScores);
 
+    let swaps = false;
+      do {
+        swaps = false;
+        for (let i = 0; i < allMessages.length - 1; i++) {
+          if (allScores[i] > allScores[i + 1]) {
+            let temp = allScores[i + 1];
+            let gay = allMessages[i + 1];
+            allScores[i + 1] = allScores[i];
+            allMessages[i + 1] = allMessages[i];
+            allScores[i] = temp;
+            allMessages[i] = gay;
+            swaps = true;
+          }
+        }
+      } while (swaps);
+
+      console.log(allMessages);
+      console.log('all the scores are ', allScores);
+
+      let numOfSentences = Math.ceil(0.25*allMessages.length);
+
+      let summary = [];
+
+      for (let i = allMessages.length - 1; i >= allMessages.length - numOfSentences; i--) {
+        let line = "";
+        for(let j = 0; j < allMessages[i].length; j++){
+
+          line += allMessages[i][j] + ' ';
+
+        }
+        line.replace(',', ' ');
+        summary.push(line.substring(0,line.length - 1) + ".");
+      }
+
+      console.log(summary);
+      return summary;
   },
 
   intersect(arr1, arr2) {
